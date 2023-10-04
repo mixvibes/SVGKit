@@ -391,6 +391,9 @@ static NSMutableDictionary* globalSVGKImageCache;
 
 -(BOOL) hasSize
 {
+	if (self.size.height == 0 || self.size.width == 0)
+		return false;
+
 	if( ! CGSizeEqualToSize(CGSizeZero, self.internalSizeThatWasSetExplicitlyByUser ) )
 		return true;
 	
