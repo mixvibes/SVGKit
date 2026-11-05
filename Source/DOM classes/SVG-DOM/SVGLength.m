@@ -145,6 +145,16 @@ static float cachedDevicePixelsPerInch;
 	/** Using this as reference: http://en.wikipedia.org/wiki/Retina_Display and https://www.theiphonewiki.com/wiki/Models
       */
 	
+#if TARGET_OS_SIMULATOR || TARGET_OS_MACCATALYST
+	/** A simulator or a Mac reports the host's processor as "hw.machine" ("x86_64", and "arm64"
+	 on Apple Silicon), never a device model, so the list below cannot apply. Checked at build
+	 time rather than on that name: an unknown name ends on the NSAssert at the bottom, which
+	 throws inside +initialize, while the first SVG of the process is parsed, and that image
+	 then fails to load in every build with assertions enabled. */
+	SVGKitLogWarn(@"[%@] WARNING: you are running on a simulator or a Mac; it's impossible for us to calculate centimeter/millimeter/inches units correctly", [self class]);
+	return 132.0f; // Desktop machine
+#endif
+	
 	size_t size;
 	sysctlbyname("hw.machine", NULL, &size, NULL, 0);
 	char *machine = malloc(size);
@@ -227,12 +237,6 @@ static float cachedDevicePixelsPerInch;
         NSAssert(FALSE, @"Update your source code or disable assertions: you are using an iWatch that didn't exist when this code was written, we have no idea what the pixel count per inch is!");
         return 326.0f;
     }
-	
-	if( [platform hasPrefix:@"x86_64"])
-	{
-		SVGKitLogWarn(@"[%@] WARNING: you are running on the simulator; it's impossible for us to calculate centimeter/millimeter/inches units correctly", [self class]);
-		return 132.0f; // Simulator, running on desktop machine
-	}
 	
 	NSAssert(FALSE, @"Cannot determine the PPI values for current device; returning 0.0f - hopefully this will crash your code (you CANNOT run SVG's that use CM/IN/MM etc until you fix this)" );
 	return 0.0f; // Bet you'll get a divide by zero here...
